@@ -98,9 +98,13 @@ def get_n_sets(petal_labels, dataset_labels):
             raise KeyError("Key not understood: " + logic)
     return n_sets
 
-def draw_venn(*, petal_labels, dataset_labels, hint_hidden, colors, figsize, fontsize, legend_loc, ax):
+def draw_venn(*, petal_labels, dataset_labels, hint_hidden, colors, figsize, fontsize, legend_fontsize=None, legend_loc, ax):
     """Draw true Venn diagram, annotate petals and dataset labels"""
     n_sets = get_n_sets(petal_labels, dataset_labels)
+
+    if legend_fontsize is None:
+        legend_fontsize = fontsize
+
     if 2 <= n_sets < 6:
         draw_shape = draw_ellipse
     elif n_sets == 6:
@@ -119,7 +123,7 @@ def draw_venn(*, petal_labels, dataset_labels, hint_hidden, colors, figsize, fon
             x, y = PETAL_LABEL_COORDS[n_sets][logic]
             draw_text(ax, x, y, petal_label, fontsize=fontsize)
     if legend_loc is not None:
-        ax.legend(dataset_labels, loc=legend_loc, prop={"size": fontsize})
+        ax.legend(dataset_labels, loc=legend_loc, prop={"size": legend_fontsize})
     return ax
 
 def update_hidden(hidden, logic, petal_labels):
@@ -138,9 +142,13 @@ def draw_hint_explanation(ax, dataset_labels, fontsize):
     )
     draw_text(ax, .5, -.1, hint_text, fontsize)
 
-def draw_pseudovenn6(*, petal_labels, dataset_labels, hint_hidden, colors, figsize, fontsize, legend_loc, ax):
+def draw_pseudovenn6(*, petal_labels, dataset_labels, hint_hidden, colors, figsize, fontsize, legend_fontsize=None, legend_loc, ax):
     """Draw intersection of 6 circles (does not include some combinations), annotate petals and dataset labels"""
     n_sets = get_n_sets(petal_labels, dataset_labels)
+
+    if legend_fontsize is None:
+        legend_fontsize = fontsize
+
     if n_sets != 6:
         raise NotImplementedError("Pseudovenn implemented only for 6 sets")
     ax = init_axes(ax, figsize)
@@ -167,7 +175,7 @@ def draw_pseudovenn6(*, petal_labels, dataset_labels, hint_hidden, colors, figsi
         ax.set(xlim=(-.2, 1.05))
         draw_hint_explanation(ax, dataset_labels, fontsize)
     if legend_loc is not None:
-        ax.legend(dataset_labels, loc=legend_loc, prop={"size": fontsize})
+        ax.legend(dataset_labels, loc=legend_loc, prop={"size": legend_fontsize})
     return ax
 
 def is_valid_dataset_dict(data):
@@ -180,8 +188,12 @@ def is_valid_dataset_dict(data):
     else:
         return True
 
-def venn_dispatch(data, func, fmt="{size}", hint_hidden=False, cmap="viridis", alpha=.4, figsize=(8, 8), fontsize=13, legend_loc="upper right", ax=None):
+def venn_dispatch(data, func, fmt="{size}", hint_hidden=False, cmap="viridis", alpha=.4, figsize=(8, 8), fontsize=13, legend_fontsize=None, legend_loc="upper right", ax=None):
     """Check input, generate petal labels, draw venn or pseudovenn diagram"""
+
+    if legend_fontsize is None:
+        legend_fontsize = fontsize
+
     if not is_valid_dataset_dict(data):
         raise TypeError("Only dictionaries of sets are understood")
     if hint_hidden and (func == draw_pseudovenn6) and (fmt != "{size}"):
@@ -192,7 +204,7 @@ def venn_dispatch(data, func, fmt="{size}", hint_hidden=False, cmap="viridis", a
         petal_labels=generate_petal_labels(data.values(), fmt),
         dataset_labels=data.keys(), hint_hidden=hint_hidden,
         colors=generate_colors(n_colors=n_sets, cmap=cmap, alpha=alpha),
-        figsize=figsize, fontsize=fontsize, legend_loc=legend_loc, ax=ax
+        figsize=figsize, fontsize=fontsize, legend_fontsize=legend_fontsize, legend_loc=legend_loc, ax=ax
     )
 
 venn = partial(venn_dispatch, func=draw_venn, hint_hidden=False)
